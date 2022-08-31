@@ -16,10 +16,15 @@ public class ManualObject : MonoBehaviour
         verts[0] = new Vector3(0, 0, 0);
         verts[1] = new Vector3(1, 0, 0);
         verts[2] = new Vector3(1, 1, 0);
+        Vector2[] uvs = new Vector2[3];
+        uvs[0] = new Vector2(0, 0);
+        uvs[1] = new Vector2(1, 0);
+        uvs[2] = new Vector2(1, 1);
 
         int[] inds = new int[] { 0, 1, 2, 2, 1, 0 };
 
         mesh.vertices = verts;
+        mesh.uv = uvs;
         mesh.SetIndices(inds, MeshTopology.Triangles, 0);
 
         renderer = gameObject.AddComponent<MeshRenderer>();
