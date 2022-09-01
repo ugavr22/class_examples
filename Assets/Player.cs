@@ -19,12 +19,22 @@ public class Player : MonoBehaviour
     {
         //ball.position
         headRotation += headSpeed * Time.deltaTime;
-        head.rotation = Quaternion.Euler(0, headRotation, 0);
+        //head.rotation = Quaternion.Euler(0, headRotation, 0);
+     
+        //head.rotation = Quaternion.AngleAxis(headRotation, (new Vector3(.5f,3f,-2f)).normalized);
+        //Debug.Log(head.rotation.eulerAngles);
+        //head.rotation = Quaternion.LookRotation(Vector3.up,Vector3.back);
 
         Vector3 mouthInWorld = head.localToWorldMatrix.MultiplyPoint(Vector3.forward);
         Vector3 mouthInPlane = ball.parent.worldToLocalMatrix.MultiplyPoint(mouthInWorld);
         //ball.position = head.position + head.forward;
-        ball.localPosition = mouthInPlane;
+        //ball.localPosition = mouthInPlane;
+
+        //make head look at ball
+        Vector3 headToBall = ball.position - head.position;
+        //head.rotation = Quaternion.LookRotation(headToBall.normalized);
+        //head.forward = headToBall.normalized;
+        head.LookAt(ball);
 
     }
 }
