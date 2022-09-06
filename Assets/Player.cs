@@ -36,5 +36,10 @@ public class Player : MonoBehaviour
         //head.forward = headToBall.normalized;
         head.LookAt(ball);
 
+        //Quaternion.Slerp() used to average quaternions 
+        //Vector3.Lerp() used to average vectors
+        //Vector3.Cross() used to find the cross product of two vectors
+        //Vector3.Angle / Vector3.SignedAngle used to find the angle between two vectors
+
     }
 }
