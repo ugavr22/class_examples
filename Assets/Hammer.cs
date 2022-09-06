@@ -22,15 +22,19 @@ public class Hammer : MonoBehaviour
 	{
 		//Debug.Log(collision.body);
 		
-        Collider c = collision.contacts[0].thisCollider;
-
-		if (c.gameObject == hammerHead )
+		
+        
+		for(int i=0;i<collision.contactCount;i++)
 		{
-			Explosion e = Instantiate(explosionPrefab);
-			e.transform.position = collision.contacts[0].point;
-			e.endRadius = 1;
-			e.startRadius = .1f;
-			e.explosionSpeed = 1;
+			ContactPoint cp = collision.GetContact(i);
+			if (cp.thisCollider.gameObject == hammerHead)
+			{
+				Explosion e = Instantiate(explosionPrefab);
+				e.transform.position = collision.contacts[0].point;
+				e.endRadius = 1;
+				e.startRadius = .1f;
+				e.explosionSpeed = 1;
+			}
 		}
 		
 	}
