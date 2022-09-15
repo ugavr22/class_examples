@@ -15,6 +15,6 @@ public class JointEvent : MonoBehaviour
     void Update()
     {
         HingeJoint joint = GetComponent<HingeJoint>();
-        Debug.Log(joint.angle);
+        //Debug.Log(joint.angle);
     }
 }
