@@ -5,22 +5,49 @@ using UnityEngine.InputSystem;
 
 public class VRHand : MonoBehaviour
 {
-    public InputAction trigger;
-    public OVRInput.Controller controller;
+
+    public List<VRGrabbable> grabbables = new List<VRGrabbable>();
+    public Transform grabOffset;
     // Start is called before the first frame update
     void Start()
     {
         
-        Debug.Log(OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger, controller));
-        //trigger.performed += (ctx) => {
-        //    Debug.Log(ctx.ReadValue<float>());
-        //};
-        //trigger.Enable();
+
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+
+	private void OnTriggerEnter(Collider other)
+	{
+        Rigidbody rb = other.attachedRigidbody;
+        if(rb == null)
+		{
+            return;
+		}
+        VRGrabbable grabbable = rb.GetComponent<VRGrabbable>();
+        if(grabbable == null) {
+            return;
+        }
+        grabbables.Add(grabbable);
+
+    }
+
+	private void OnTriggerExit(Collider other)
+	{
+        Rigidbody rb = other.attachedRigidbody;
+        if (rb == null)
+        {
+            return;
+        }
+        VRGrabbable grabbable = rb.GetComponent<VRGrabbable>();
+        if (grabbable == null)
+        {
+            return;
+        }
+        grabbables.Remove(grabbable);
     }
 }
