@@ -26,8 +26,12 @@ public class VRPlayer : MonoBehaviour
     Vector3[] cameraRigGripLocation = new Vector3[2];
     public VRGrabbable[] grabbedObjects = new VRGrabbable[2] { null, null };
 
-
-
+    public GameObject teleporterArcPointPrefab;
+    public Transform[] teleporterStartPoses = new Transform[2];
+    public Transform[] teleporterTargetPoses = new Transform[2];
+    public bool[] teleporterValid = new bool[2];
+    public float teleporterStartSpeed;
+    public float teleporterMaxDistance;
     // Start is called before the first frame update
     void Start()
     {
@@ -51,9 +55,14 @@ public class VRPlayer : MonoBehaviour
         Vector3[] displacements = new Vector3[2];
         for(int i = 0; i < 2; i++) //the two hands
 		{
+            //destroy the teleporter arc
+            foreach (Transform t in teleporterStartPoses[i])
+            {
+                GameObject.Destroy(t.gameObject);
+            }
 
             //teleporting
-            if(teleportStates[i] == TELEPORT_STATE.WAITING)
+            if (teleportStates[i] == TELEPORT_STATE.WAITING)
 			{
                 if(joyValues[i].y > teleportThresholdActivate)
 				{
@@ -62,15 +71,62 @@ public class VRPlayer : MonoBehaviour
 			}
 			else if(teleportStates[i] == TELEPORT_STATE.ACTIVE)
 			{
-                if(joyValues[i].y < teleportThresholdDeactivate)
+                
+
+                if (joyValues[i].y < teleportThresholdDeactivate && teleporterValid[i])
 				{
                     //do the teleport
-                    Vector3 teleportOffset = hands[i].transform.forward;
-                    teleportOffset.y = 0;
-                    teleportOffset.Normalize();
-                    this.transform.position += teleportOffset;
+                    //Vector3 teleportOffset = hands[i].transform.forward;
+                    //teleportOffset.y = 0;
+                    //teleportOffset.Normalize();
+                    //this.transform.position += teleportOffset;
+
                     teleportStates[i] = TELEPORT_STATE.WAITING;
+                    transform.position = teleporterTargetPoses[i].position;
 				}
+
+                //adjust the teleporter visualization
+
+                //shoot a projectile out from the start point, in the direction of the start point forward at a velocity
+
+                Vector3 currentPosition = teleporterStartPoses[i].position;
+                Vector3 currentVelocity = teleporterStartPoses[i].forward * teleporterStartSpeed;
+                float currentDistance = 0;
+                float deltaTime = .02f;  
+                while(currentDistance < teleporterMaxDistance)
+				{
+                    Vector3 nextPosition = currentPosition + currentVelocity * deltaTime;
+                    Vector3 nextVelocity = currentVelocity + -9.81f * Vector3.up * deltaTime;
+
+                    Vector3 between = nextPosition - currentPosition;
+                    RaycastHit[] hits = Physics.RaycastAll(currentPosition, between.normalized, between.magnitude);
+
+                    teleporterValid[i] = false;
+                    foreach(RaycastHit h in hits) { 
+                        if(h.normal.y > .9f) //partially broken, will go through slanted surfaces
+						{
+                            teleporterTargetPoses[i].gameObject.SetActive(true);
+                            teleporterTargetPoses[i].position = h.point;
+                            teleporterTargetPoses[i].up = h.normal;
+                            teleporterValid[i] = true;
+						}
+                        break;
+					}
+
+
+                    GameObject point = GameObject.Instantiate(teleporterArcPointPrefab);
+                    point.transform.parent = teleporterStartPoses[i];
+                    point.transform.position = nextPosition;
+                    point.transform.forward = nextVelocity.normalized;
+                    currentDistance += between.magnitude;
+
+                    currentPosition = nextPosition;
+                    currentVelocity = nextVelocity;
+
+
+				}
+
+
 			}
 
             //gripping
