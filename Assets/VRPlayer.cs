@@ -6,12 +6,18 @@ public class VRPlayer : MonoBehaviour
 {
 
     public enum GRIP_STATE { OPEN, OBJECT, AIR}
+    public enum TELEPORT_STATE { ACTIVE, WAITING }
 
 
-   
+    public float teleportThresholdActivate;
+    public float teleportThresholdDeactivate;
+
     public float gripThresholdActivate;
     public float gripThresholdDeactivate;
 
+
+    public Vector2[] joyValues = new Vector2[2];
+    public TELEPORT_STATE[] teleportStates = new TELEPORT_STATE[] { TELEPORT_STATE.WAITING, TELEPORT_STATE.WAITING };
 
     public float[] gripValues = new float[2] { 0, 0 };
     public GRIP_STATE[] gripStates = new GRIP_STATE[2] { GRIP_STATE.OPEN, GRIP_STATE.OPEN };
@@ -35,11 +41,40 @@ public class VRPlayer : MonoBehaviour
         gripValues[0] = OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger);
         gripValues[1] = OVRInput.Get(OVRInput.Axis1D.SecondaryHandTrigger);
 
+        joyValues[0] = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick);
+        joyValues[1] = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick);
         
 
+
+
+
         Vector3[] displacements = new Vector3[2];
-        for(int i = 0; i < 2; i++)
+        for(int i = 0; i < 2; i++) //the two hands
 		{
+
+            //teleporting
+            if(teleportStates[i] == TELEPORT_STATE.WAITING)
+			{
+                if(joyValues[i].y > teleportThresholdActivate)
+				{
+                    teleportStates[i] = TELEPORT_STATE.ACTIVE;
+				}
+			}
+			else if(teleportStates[i] == TELEPORT_STATE.ACTIVE)
+			{
+                if(joyValues[i].y < teleportThresholdDeactivate)
+				{
+                    //do the teleport
+                    Vector3 teleportOffset = hands[i].transform.forward;
+                    teleportOffset.y = 0;
+                    teleportOffset.Normalize();
+                    this.transform.position += teleportOffset;
+                    teleportStates[i] = TELEPORT_STATE.WAITING;
+				}
+			}
+
+            //gripping
+
             displacements[i] = Vector3.zero;
 			if (gripStates[i] == GRIP_STATE.AIR) //we are gripping the air, handle movement and release
 			{
@@ -76,6 +111,12 @@ public class VRPlayer : MonoBehaviour
 
                     rb.velocity = between / Time.deltaTime;
 
+                    Quaternion betweenRot = hands[i].grabOffset.rotation * Quaternion.Inverse(g.transform.rotation);
+                    Vector3 axis;
+                    float angle;
+                    betweenRot.ToAngleAxis(out angle, out axis);
+
+                    rb.angularVelocity = angle * Mathf.Deg2Rad * axis / Time.deltaTime;
 
                 }
 
