@@ -62,79 +62,86 @@ public class VRPlayer : MonoBehaviour
             {
                 GameObject.Destroy(t.gameObject);
             }
-
+            
             //teleporting
             if (teleportStates[i] == TELEPORT_STATE.WAITING)
 			{
-                if(joyValues[i].y > teleportThresholdActivate)
+                
+                if (joyValues[i].y > teleportThresholdActivate)
 				{
                     teleportStates[i] = TELEPORT_STATE.ACTIVE;
-				}
+                   
+                }
 			}
 			else if(teleportStates[i] == TELEPORT_STATE.ACTIVE)
 			{
-                
+                if (joyValues[i].y < teleportThresholdDeactivate)
+                {
 
-                if (joyValues[i].y < teleportThresholdDeactivate && teleporterValid[i])
-				{
-                    //do the teleport
-                    //Vector3 teleportOffset = hands[i].transform.forward;
-                    //teleportOffset.y = 0;
-                    //teleportOffset.Normalize();
-                    //this.transform.position += teleportOffset;
-                    Vector3 headInPlayspace = transform.InverseTransformPoint(head.position);
-                    Vector3 feetInPlayspace = headInPlayspace;
-                    feetInPlayspace.y = 0;
-                    Vector3 feetInWorld = transform.TransformVector(feetInPlayspace);
-                    Vector3 newPlayspacePosition = teleporterTargetPoses[i].position - feetInWorld;
-                    
+                    if (teleporterValid[i])
+                    {
+                        //do the teleport
+                        //Vector3 teleportOffset = hands[i].transform.forward;
+                        //teleportOffset.y = 0;
+                        //teleportOffset.Normalize();
+                        //this.transform.position += teleportOffset;
+                        Vector3 headInPlayspace = transform.InverseTransformPoint(head.position);
+                        Vector3 feetInPlayspace = headInPlayspace;
+                        feetInPlayspace.y = 0;
+                        Vector3 feetInWorld = transform.TransformVector(feetInPlayspace);
+                        Vector3 newPlayspacePosition = teleporterTargetPoses[i].position - feetInWorld;
+                        transform.position = newPlayspacePosition;
+
+                    }
                     teleportStates[i] = TELEPORT_STATE.WAITING;
-                    transform.position = newPlayspacePosition;
                     teleporterTargetPoses[i].gameObject.SetActive(false);
-				}
+                }
+                else
+                {
+                    //adjust the teleporter visualization
 
-                //adjust the teleporter visualization
+                    //shoot a projectile out from the start point, in the direction of the start point forward at a velocity
 
-                //shoot a projectile out from the start point, in the direction of the start point forward at a velocity
+                    Vector3 currentPosition = teleporterStartPoses[i].position;
+                    Vector3 currentVelocity = teleporterStartPoses[i].forward * teleporterStartSpeed;
+                    float currentDistance = 0;
+                    float deltaTime = .02f;
+                    teleporterValid[i] = false;
+                    while (currentDistance < teleporterMaxDistance && !teleporterValid[i])
+                    {
+                        Vector3 nextPosition = currentPosition + currentVelocity * deltaTime;
+                        Vector3 nextVelocity = currentVelocity + -9.81f * Vector3.up * deltaTime;
 
-                Vector3 currentPosition = teleporterStartPoses[i].position;
-                Vector3 currentVelocity = teleporterStartPoses[i].forward * teleporterStartSpeed;
-                float currentDistance = 0;
-                float deltaTime = .02f;
-                teleporterValid[i] = false;
-                while (currentDistance < teleporterMaxDistance && !teleporterValid[i])
-				{
-                    Vector3 nextPosition = currentPosition + currentVelocity * deltaTime;
-                    Vector3 nextVelocity = currentVelocity + -9.81f * Vector3.up * deltaTime;
+                        Vector3 between = nextPosition - currentPosition;
+                        RaycastHit[] hits = Physics.RaycastAll(currentPosition, between.normalized, between.magnitude);
 
-                    Vector3 between = nextPosition - currentPosition;
-                    RaycastHit[] hits = Physics.RaycastAll(currentPosition, between.normalized, between.magnitude);
+                        teleporterTargetPoses[i].gameObject.SetActive(false); //deactivate every frame
+                        foreach (RaycastHit h in hits)
+                        {
+                            if (h.normal.y > .9f) //partially broken, will go through slanted surfaces
+                            {
+                                teleporterTargetPoses[i].position = h.point;
+                                teleporterTargetPoses[i].up = h.normal;
+                                teleporterValid[i] = true;
+                                teleporterTargetPoses[i].gameObject.SetActive(true); //deactivate every frame
+                                break;
+                            }
 
-                    
-                    foreach(RaycastHit h in hits) { 
-                        if(h.normal.y > .9f) //partially broken, will go through slanted surfaces
-						{
-                            teleporterTargetPoses[i].gameObject.SetActive(true);
-                            teleporterTargetPoses[i].position = h.point;
-                            teleporterTargetPoses[i].up = h.normal;
-                            teleporterValid[i] = true;
-                            break;
                         }
-                        
-					}
 
 
-                    GameObject point = GameObject.Instantiate(teleporterArcPointPrefab);
-                    point.transform.parent = teleporterStartPoses[i];
-                    point.transform.position = nextPosition;
-                    point.transform.forward = nextVelocity.normalized;
-                    currentDistance += between.magnitude;
+                        GameObject point = GameObject.Instantiate(teleporterArcPointPrefab);
+                        point.transform.parent = teleporterStartPoses[i];
+                        point.transform.position = nextPosition;
+                        point.transform.forward = nextVelocity.normalized;
+                        currentDistance += between.magnitude;
 
-                    currentPosition = nextPosition;
-                    currentVelocity = nextVelocity;
+                        currentPosition = nextPosition;
+                        currentVelocity = nextVelocity;
 
 
-				}
+                    }
+                }
 
 
 			}
