@@ -8,7 +8,11 @@ public class VRPlayer : MonoBehaviour
     public enum GRIP_STATE { OPEN, OBJECT, AIR}
     public enum TELEPORT_STATE { ACTIVE, WAITING }
 
+    public enum SNAP_STATE { ACTIVE, WAITING }
 
+    public float snapActivate;
+    public float snapDeactivate;
+    public float snapDegree;
     public float teleportThresholdActivate;
     public float teleportThresholdDeactivate;
 
@@ -18,6 +22,7 @@ public class VRPlayer : MonoBehaviour
 
     public Vector2[] joyValues = new Vector2[2];
     public TELEPORT_STATE[] teleportStates = new TELEPORT_STATE[] { TELEPORT_STATE.WAITING, TELEPORT_STATE.WAITING };
+    public SNAP_STATE[] snapStates = new SNAP_STATE[] { SNAP_STATE.WAITING, SNAP_STATE.WAITING };
 
     public float[] gripValues = new float[2] { 0, 0 };
     public GRIP_STATE[] gripStates = new GRIP_STATE[2] { GRIP_STATE.OPEN, GRIP_STATE.OPEN };
@@ -38,6 +43,25 @@ public class VRPlayer : MonoBehaviour
     void Start()
     {
         
+    }
+
+    Vector3 getFootPositionWorld()
+	{
+        Vector3 headInWorld = head.position;
+        Vector3 playCenter = transform.position;
+        Vector3 feetInWorld = headInWorld;
+        feetInWorld.y = playCenter.y;
+        
+        return feetInWorld;
+    }
+
+    public void doTeleport(Vector3 targetFootPosWorld)
+	{
+      
+        Vector3 offset = targetFootPosWorld - getFootPositionWorld();
+
+
+        transform.position = transform.position + offset;
     }
 
     // Update is called once per frame
@@ -62,7 +86,32 @@ public class VRPlayer : MonoBehaviour
             {
                 GameObject.Destroy(t.gameObject);
             }
-            
+
+            //snap rotation
+
+            if (snapStates[i] == SNAP_STATE.WAITING)
+            {
+                float lr = joyValues[i].x;
+
+                if (Mathf.Abs(lr) > snapActivate)
+                {
+                    snapStates[i] = SNAP_STATE.ACTIVE;
+                    float rotateAmount = lr > 0 ? snapDegree : -snapDegree;
+                    Vector3 currentFootPosition = getFootPositionWorld();
+
+                    transform.Rotate(0, rotateAmount, 0, Space.Self);
+                    doTeleport(currentFootPosition); //moves back to where we were
+                }
+            }
+            else if (snapStates[i] == SNAP_STATE.ACTIVE)
+            {
+                float lr = joyValues[i].x;
+
+                if (Mathf.Abs(lr) < snapDeactivate)
+                {
+                    snapStates[i] = SNAP_STATE.WAITING;
+                }
+            }
             //teleporting
             if (teleportStates[i] == TELEPORT_STATE.WAITING)
 			{
@@ -85,12 +134,7 @@ public class VRPlayer : MonoBehaviour
                         //teleportOffset.y = 0;
                         //teleportOffset.Normalize();
                         //this.transform.position += teleportOffset;
-                        Vector3 headInPlayspace = transform.InverseTransformPoint(head.position);
-                        Vector3 feetInPlayspace = headInPlayspace;
-                        feetInPlayspace.y = 0;
-                        Vector3 feetInWorld = transform.TransformVector(feetInPlayspace);
-                        Vector3 newPlayspacePosition = teleporterTargetPoses[i].position - feetInWorld;
-                        transform.position = newPlayspacePosition;
+                        doTeleport(teleporterTargetPoses[i].position);
 
                     }
                     teleportStates[i] = TELEPORT_STATE.WAITING;

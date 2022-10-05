@@ -1197,6 +1197,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e63d9adcd969c24ab2ad83927fd97f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  snapActivate: 0.8
+  snapDeactivate: 0.2
+  snapDegree: 25
   teleportThresholdActivate: 0.8
   teleportThresholdDeactivate: 0.2
   gripThresholdActivate: 0.8
@@ -1205,6 +1208,7 @@ MonoBehaviour:
   - {x: 0, y: 0}
   - {x: 0, y: 0}
   teleportStates: 0100000001000000
+  snapStates: 0100000001000000
   gripValues:
   - 0
   - 0
