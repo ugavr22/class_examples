@@ -653,6 +653,7 @@ GameObject:
   - component: {fileID: 841804922}
   - component: {fileID: 841804925}
   - component: {fileID: 841804926}
+  - component: {fileID: 841804927}
   m_Layer: 0
   m_Name: Ball
   m_TagString: Untagged
@@ -668,7 +669,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 841804920}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.3925792, y: 1.0936241, z: 0.92}
+  m_LocalPosition: {x: 1.3925792, y: 1.482, z: 0.92}
   m_LocalScale: {x: 0.20000003, y: 0.2, z: 0.20000003}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -766,6 +767,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09447fdb6d1cf064498483580ab88330, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &841804927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 841804920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ea3fab85b2b1d442bebe270999e4110, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bounceSound: {fileID: 8300000, guid: 16d59689a9685f440b42329caa4cc593, type: 3}
 --- !u!1 &918977841
 GameObject:
   m_ObjectHideFlags: 0

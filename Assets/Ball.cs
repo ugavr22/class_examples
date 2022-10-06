@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Ball : MonoBehaviour
 {
+    [SerializeField] AudioClip bounceSound;
     // Start is called before the first frame update
     void Start()
     {
@@ -15,4 +16,9 @@ public class Ball : MonoBehaviour
     {
         
     }
+
+	private void OnCollisionEnter(Collision collision)
+	{
+        AudioSource.PlayClipAtPoint(bounceSound, collision.contacts[0].point,collision.relativeVelocity.magnitude/30.0f);
+	}
 }
