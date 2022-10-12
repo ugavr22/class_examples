@@ -41,9 +41,11 @@ public class GameManager : MonoBehaviour
                     break;
 				}
 			}
-
-            //end game
-            endGame();
+            if (gameFinished)
+            {
+                //end game
+                endGame();
+            }
 
 		}
 	}
