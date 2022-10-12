@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
 
@@ -12,6 +12,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] List<TargetLocation> targetLocations;
     [SerializeField] Transform startLocation;
     [SerializeField] StartButton startButton;
+
+    public enum GAME_STATE { IDLE, STARTED, FINISHED }
+    public GAME_STATE gameState = GAME_STATE.IDLE;
     // Start is called before the first frame update
     IEnumerator Start()
     {
@@ -22,7 +25,27 @@ public class GameManager : MonoBehaviour
 
     void startPressed(VRHand hand)
 	{
-        startGame();
+        if (gameState == GAME_STATE.IDLE)
+        {
+            startGame();
+        }
+        else if(gameState == GAME_STATE.STARTED)
+		{
+
+            bool gameFinished = true;
+            foreach(TargetLocation t in targetLocations)
+			{
+				if (!t.isFound)
+				{
+                    gameFinished = false;
+                    break;
+				}
+			}
+
+            //end game
+            endGame();
+
+		}
 	}
     // Update is called once per frame
     void Update()
@@ -36,7 +59,12 @@ public class GameManager : MonoBehaviour
 		{
             so.gameObject.SetActive(true);
 		}
-        
+        gameState = GAME_STATE.STARTED;
+	}
+
+    public void endGame()
+	{
+        SceneManager.LoadScene(0);
 	}
 
     public IEnumerator resetGame()

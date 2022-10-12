@@ -186,7 +186,7 @@ public class VRPlayer : MonoBehaviour
 
                     }
                 }
-
+            
 
 			}
 
@@ -204,7 +204,7 @@ public class VRPlayer : MonoBehaviour
                     Vector3 handInTracking = transform.worldToLocalMatrix.MultiplyPoint(hands[i].transform.position);
                     Vector3 between = handInTracking - gripLocations[i];
 
-                    displacements[i] = - between;
+                    displacements[i] = transform.TransformVector(-between);
 
 				}
 
@@ -261,6 +261,7 @@ public class VRPlayer : MonoBehaviour
 
 		}
 
+        
         if(gripStates[0] == GRIP_STATE.AIR && gripStates[1] == GRIP_STATE.AIR)
 		{
             this.transform.position = (cameraRigGripLocation[0] + displacements[0] + cameraRigGripLocation[1] + displacements[1]) / 2.0f;
