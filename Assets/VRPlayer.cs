@@ -256,6 +256,7 @@ public class VRPlayer : MonoBehaviour
                         gripStates[i] = GRIP_STATE.OBJECT;
                         grabbedObjects[i] = hands[i].grabbables[0]; //just grab the first objecct
                         hands[i].grabOffset.transform.position = grabbedObjects[i].transform.position;
+                        hands[i].grabOffset.transform.rotation = grabbedObjects[i].transform.rotation;
                     }
 			}
 
