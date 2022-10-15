@@ -57,8 +57,13 @@ public class GameManager : MonoBehaviour
 
     public void startGame()
 	{
+        List<HidingLocation> hidingTemp = new List<HidingLocation>(hidingLocations);
         foreach(SearchObject so in objectsToFind)
 		{
+            //choose a hiding location randomly that isn't already chosen
+            int loc = Random.Range(0, hidingTemp.Count);
+            so.transform.position = hidingTemp[loc].transform.position;
+            hidingTemp.RemoveAt(loc);
             so.gameObject.SetActive(true);
 		}
         gameState = GAME_STATE.STARTED;

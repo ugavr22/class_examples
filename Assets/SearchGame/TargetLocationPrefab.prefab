@@ -110,6 +110,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51aab53f9e5e6524089387d3b4fa9d7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  foundColor: {r: 0, g: 0, b: 0, a: 0}
+  notFoundColor: {r: 0, g: 0, b: 0, a: 0}
+  targetCollider: {fileID: 0}
   target: {fileID: 0}
   isFound: 0
   label3d: {fileID: 0}
@@ -160,6 +163,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51aab53f9e5e6524089387d3b4fa9d7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  foundColor: {r: 0.15817463, g: 1, b: 0, a: 0.44705883}
+  notFoundColor: {r: 1, g: 0, b: 0, a: 0.4745098}
+  targetCollider: {fileID: 3349802405770858630}
   target: {fileID: 0}
   isFound: 0
   label3d: {fileID: 860520681992714009}
