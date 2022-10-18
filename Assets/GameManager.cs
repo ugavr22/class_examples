@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
 public class GameManager : MonoBehaviour
 {
 
@@ -21,6 +22,7 @@ public class GameManager : MonoBehaviour
         startButton.buttonPressed += startPressed;
         yield return new WaitForSeconds(3.0f);
         StartCoroutine(resetGame());
+        DebugText.Log("hello");
     }
 
     void startPressed(VRHand hand)
