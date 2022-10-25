@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Gardener : MonoBehaviour
 {
+    [SerializeField] Transform headBone;
+    [SerializeField] Transform leftEye;
+    [SerializeField] Transform rightEye;
     [SerializeField] Animator anim;
     // Start is called before the first frame update
     void Start()
