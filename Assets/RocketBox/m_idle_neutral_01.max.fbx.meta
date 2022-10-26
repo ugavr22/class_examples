@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 428d94cee9e6d464bafcb5c6fa65b34d
+guid: 0c4ade1ede4531146bee59292f0e1054
 ModelImporter:
   serializedVersion: 21300
   internalIDToNameTable:
@@ -22,8 +22,8 @@ ModelImporter:
     rigImportErrors: 
     rigImportWarnings: "Copied Avatar Rig Configuration mis-match. Bone length in
       copied configuration does not match position in animation file:\n\t'Bip01 L
-      Thigh' : position error = 30.747271 mm\n\t'Bip01 R Thigh' : position error
-      = 24.675217 mm\n"
+      Thigh' : position error = 4.592951 mm\n\t'Bip01 R Thigh' : position error =
+      4.509480 mm\n"
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -43,7 +43,7 @@ ModelImporter:
       takeName: Take 001
       internalID: 0
       firstFrame: 0
-      lastFrame: 75
+      lastFrame: 350
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -54,10 +54,10 @@ ModelImporter:
       loopBlend: 1
       loopBlendOrientation: 1
       loopBlendPositionY: 1
-      loopBlendPositionXZ: 0
+      loopBlendPositionXZ: 1
       keepOriginalOrientation: 1
       keepOriginalPositionY: 1
-      keepOriginalPositionXZ: 0
+      keepOriginalPositionXZ: 1
       heightFromFeet: 0
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
