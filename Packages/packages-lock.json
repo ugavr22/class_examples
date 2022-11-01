@@ -216,6 +216,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "edu.uga.engr.vel.velnet": {
+      "version": "https://github.com/velaboratory/VelNetUnity.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "78076c7f41647c1915841fdccd31cc1302c7a493"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,
