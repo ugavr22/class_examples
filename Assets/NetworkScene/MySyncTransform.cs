@@ -16,6 +16,14 @@ public class MySyncTransform : NetworkSerializedObjectStream
 		binaryWriter.Write(transform.position);
 	}
 
+	public void rpcReceiveMessage(byte[] message)
+	{
+		MemoryStream mem = new MemoryStream(message);
+		BinaryReader reader = new BinaryReader(mem);
+		string sent = reader.ReadString();
+		Debug.Log("got a message: " + sent);
+	}
+
 	// Start is called before the first frame update
 	void Start()
     {
@@ -27,7 +35,15 @@ public class MySyncTransform : NetworkSerializedObjectStream
     {
 		if (networkObject.IsMine)
 		{
+			if (Input.GetKeyDown(KeyCode.R))
+			{
+				MemoryStream mem = new MemoryStream();
+				BinaryWriter writer = new BinaryWriter(mem);
 
+				writer.Write("my message");
+
+				this.SendRPC("rpcReceiveMessage", false, mem.ToArray());
+			}
 		}
 		else
 		{
