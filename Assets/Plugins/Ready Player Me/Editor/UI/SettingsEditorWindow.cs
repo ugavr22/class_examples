@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using ReadyPlayerMe.Analytics;
 using UnityEditor;
 using UnityEngine;
@@ -12,56 +11,39 @@ namespace ReadyPlayerMe
         private const string SETTINGS_HEADING = "Partner Settings";
         private const string HELP_TEXT =
             "If you are a Ready Player Me partner, please enter your subdomain here to apply your configuration to the WebView.";
-        private const string OTHER_SECTION_HEADING = "Other";
+        private const string PARTNER_LEARN_MORE_URL =
+            "https://docs.readyplayer.me/ready-player-me/for-partners/become-a-partner";
+        private const string ANALYTICS_LOGGING_HEADING = "Help us improve Ready Player Me SDK";
         private const string ANALYTICS_LOGGING_DESCRIPTION =
             "We are constantly adding new features and improvements to our SDK. Enable analytics and help us in building even better free tools for more developers. This data is used for internal purposes only and is not shared with third parties.";
-        private const string ANALYTICS_PRIVACY_TOOLTIP = "Click to read our Privacy Policy.";
-        private const string AVATAR_CONFIG_TOOLTIP = "Assign an avatar configuration to include Avatar API request parameters.";
+        private const string ANALYTICS_PRIVACY_TEXT = "Read our Privacy Policy and learn how we use the data <b>here</b>.";
         private const string ANALYTICS_PRIVACY_URL =
             "https://docs.readyplayer.me/ready-player-me/integration-guides/unity/help-us-improve-the-unity-sdk";
-        private const string CACHING_TOOLTIP =
-            "Enable caching to improve avatar loading performance at runtime.";
         private const string EDITOR_WINDOW_NAME = "rpm settings";
 
-#if UNITY_EDITOR_LINUX
-        private const string SHOW_CACHING_FOLDER_BUTTON_TEXT = "Show in file manager";
-#elif UNITY_EDITOR_OSX
-        private const string SHOW_CACHING_FOLDER_BUTTON_TEXT = "Reveal in finder";
-#else
-        private const string SHOW_CACHING_FOLDER_BUTTON_TEXT = "Show in explorer";
-#endif
-
-        private const string DOMAIN_VALIDATION_ERROR = "Please enter a valid partner subdomain (e.g. demo). Click here to read more about this issue.";
-
-        private string partnerSubdomain = string.Empty;
+        private ScriptableObject partner;
+        private string partnerSubdomain = "";
         private bool initialized;
         private bool analyticsEnabled;
-        private bool avatarCachingEnabled;
 
-        private bool isCacheEmpty;
-        private AvatarLoaderSettings avatarLoaderSettings;
+        private bool saveButtonDirty = true;
+        private string SaveButtonText => saveButtonDirty ? "Save" : "Subdomain Saved!";
 
-        private readonly GUILayoutOption inputFieldWidth = GUILayout.Width(128);
-        private readonly GUILayoutOption objectFieldWidth = GUILayout.Width(318);
+        private static readonly Vector2Int WindowSize = new Vector2Int(512, 560);
 
         private GUIStyle textFieldStyle;
         private GUIStyle textLabelStyle;
         private GUIStyle saveButtonStyle;
         private GUIStyle partnerButtonStyle;
-        private GUIStyle avatarCachingButtonStyle;
-        private GUIStyle privacyPolicyStyle;
-        private GUIStyle errorButtonStyle;
 
-        private AvatarConfig avatarConfig;
+        private readonly GUILayoutOption fieldHeight = GUILayout.Height(20);
 
-        private bool subdomainFocused;
-        private string subdomainAfterFocus = string.Empty;
-        private const string SUBDOMAIN_FIELD_CONTROL_NAME = "subdomain";
-
+        [MenuItem("Ready Player Me/Settings")]
         public static void ShowWindowMenu()
         {
             var window = (SettingsEditorWindow) GetWindow(typeof(SettingsEditorWindow));
             window.titleContent = new GUIContent("Ready Player Me Settings");
+            window.minSize = window.maxSize = WindowSize;
             window.ShowUtility();
 
             AnalyticsEditorLogger.EventLogger.LogOpenDialog(EDITOR_WINDOW_NAME);
@@ -70,22 +52,12 @@ namespace ReadyPlayerMe
         private void Initialize()
         {
             SetEditorWindowName(EDITOR_WINDOW_NAME);
-
-            partnerSubdomain = SubdomainHelper.PartnerDomain;
-            SaveSubdomain();
-
+            partner = Resources.Load<ScriptableObject>("Partner");
+            var type = partner.GetType();
+            var method = type.GetMethod("GetSubdomain");
+            partnerSubdomain = method?.Invoke(partner, null) as string;
             analyticsEnabled = AnalyticsEditorLogger.IsEnabled;
-            avatarLoaderSettings = Resources.Load<AvatarLoaderSettings>(AvatarLoaderSettings.RESOURCE_PATH);
-            avatarCachingEnabled = avatarLoaderSettings != null && avatarLoaderSettings.AvatarCachingEnabled;
-            isCacheEmpty = AvatarCache.IsCacheEmpty();
-            avatarConfig = avatarLoaderSettings != null ? avatarLoaderSettings.AvatarConfig : null;
-
             initialized = true;
-        }
-
-        private void OnFocus()
-        {
-            isCacheEmpty = AvatarCache.IsCacheEmpty();
         }
 
         private void OnGUI()
@@ -102,55 +74,30 @@ namespace ReadyPlayerMe
                 saveButtonStyle = new GUIStyle(GUI.skin.button);
                 saveButtonStyle.fontSize = 14;
                 saveButtonStyle.fontStyle = FontStyle.Bold;
-                saveButtonStyle.fixedWidth = 449;
-                saveButtonStyle.fixedHeight = ButtonHeight;
-                saveButtonStyle.padding = new RectOffset(5, 5, 5, 5);
+                saveButtonStyle.fixedHeight = 40;
+                saveButtonStyle.padding = new RectOffset(5, 5, 10, 10);
             }
 
             if (textFieldStyle == null)
             {
                 textFieldStyle = new GUIStyle(GUI.skin.textField);
-                textFieldStyle.fontSize = 12;
+                textFieldStyle.alignment = TextAnchor.MiddleCenter;
+                textFieldStyle.fontSize = 16;
             }
 
             if (textLabelStyle == null)
             {
                 textLabelStyle = new GUIStyle(GUI.skin.label);
+                textLabelStyle.alignment = TextAnchor.MiddleLeft;
                 textLabelStyle.fontStyle = FontStyle.Bold;
-                textLabelStyle.fontSize = 12;
+                textLabelStyle.fontSize = 16;
             }
 
             if (partnerButtonStyle == null)
             {
                 partnerButtonStyle = new GUIStyle(GUI.skin.button);
                 partnerButtonStyle.fontSize = 12;
-                partnerButtonStyle.padding = new RectOffset(5, 5, 5, 5);
-            }
-
-            if (avatarCachingButtonStyle == null)
-            {
-                avatarCachingButtonStyle = new GUIStyle(GUI.skin.button);
-                avatarCachingButtonStyle.fontStyle = FontStyle.Bold;
-                avatarCachingButtonStyle.fontSize = 12;
-                avatarCachingButtonStyle.padding = new RectOffset(5, 5, 5, 5);
-                avatarCachingButtonStyle.fixedHeight = ButtonHeight;
-                avatarCachingButtonStyle.fixedWidth = 225;
-            }
-
-            if (privacyPolicyStyle == null)
-            {
-                privacyPolicyStyle = new GUIStyle(GUI.skin.label);
-                privacyPolicyStyle.fontStyle = FontStyle.Bold;
-                privacyPolicyStyle.fontSize = 12;
-                privacyPolicyStyle.fixedWidth = 100;
-            }
-
-            if (errorButtonStyle == null)
-            {
-                errorButtonStyle = new GUIStyle();
-                errorButtonStyle.fixedWidth = 20;
-                errorButtonStyle.fixedHeight = 20;
-                errorButtonStyle.margin = new RectOffset(2, 0, 2, 2);
+                partnerButtonStyle.padding = new RectOffset(5, 5, 8, 8);
             }
         }
 
@@ -158,131 +105,69 @@ namespace ReadyPlayerMe
         {
             Vertical(() =>
             {
-                DrawPartnerSettings();
-                DrawAvatarSettings();
-                DrawAvatarCaching();
-                DrawOtherSection();
-            });
-        }
-
-        private void DrawPartnerSettings()
-        {
-            Vertical(() =>
-            {
-                GUILayout.Label(new GUIContent(SETTINGS_HEADING, HELP_TEXT), HeadingStyle);
+                EditorGUILayout.Space();
+                GUILayout.Label(SETTINGS_HEADING, HeadingStyle);
+                EditorGUILayout.Space();
+                EditorGUILayout.HelpBox(HELP_TEXT, MessageType.Info);
+                EditorGUILayout.Space();
 
                 Horizontal(() =>
                 {
-                    GUILayout.Space(2);
-
-                    EditorGUILayout.LabelField("Your subdomain:          https:// ", textLabelStyle, GUILayout.Width(176));
+                    EditorGUILayout.LabelField("https://", textLabelStyle, GUILayout.Width(65), GUILayout.Height(30));
                     var oldValue = partnerSubdomain;
-                    GUI.SetNextControlName(SUBDOMAIN_FIELD_CONTROL_NAME);
-                    partnerSubdomain = EditorGUILayout.TextField(oldValue, textFieldStyle, GUILayout.Width(128), GUILayout.Height(20));
+                    partnerSubdomain = EditorGUILayout.TextField(oldValue, textFieldStyle, GUILayout.Width(300),
+                        GUILayout.Height(30));
+                    EditorGUILayout.LabelField(".readyplayer.me", textLabelStyle, GUILayout.Width(128),
+                        GUILayout.Height(30));
 
-                    EditorGUILayout.LabelField(".readyplayer.me", textLabelStyle, GUILayout.Width(116), GUILayout.Height(20));
-                    GUIContent button = new GUIContent((Texture) AssetDatabase.LoadAssetAtPath("Assets/Plugins/Ready Player Me/Editor/error.png", typeof(Texture)), DOMAIN_VALIDATION_ERROR);
-
-                    var isSubdomainValid = ValidateSubdomain();
-
-                    if (!isSubdomainValid)
+                    if (oldValue != partnerSubdomain)
                     {
-                        if (GUILayout.Button(button, errorButtonStyle))
-                        {
-                            Application.OpenURL("https://docs.readyplayer.me/ready-player-me/for-partners/partner-subdomains");
-                        }
-
-                        EditorGUIUtility.AddCursorRect(GUILayoutUtility.GetLastRect(), MouseCursor.Link);
-                    }
-
-                    if (IsSubdomainFocusLost())
-                    {
-                        SaveSubdomain();
-                    }
-                });
-            }, true);
-        }
-
-        private void DrawAvatarSettings()
-        {
-            Vertical(() =>
-            {
-                GUILayout.Label(new GUIContent("Avatar Settings"), HeadingStyle);
-
-                Horizontal(() =>
-                {
-                    GUILayout.Space(2);
-                    EditorGUILayout.LabelField(new GUIContent("Avatar Config", AVATAR_CONFIG_TOOLTIP), inputFieldWidth);
-                    avatarConfig = EditorGUILayout.ObjectField(avatarConfig, typeof(AvatarConfig), false, objectFieldWidth) as AvatarConfig;
-                    if (avatarLoaderSettings != null && avatarLoaderSettings.AvatarConfig != avatarConfig)
-                    {
-                        avatarLoaderSettings.AvatarConfig = avatarConfig;
-                        SaveAvatarLoaderSettings();
-                    }
-                });
-            }, true);
-        }
-
-        private void DrawAvatarCaching()
-        {
-            Vertical(() =>
-            {
-                GUILayout.Label("Avatar Caching", HeadingStyle);
-
-                Horizontal(() =>
-                {
-                    GUILayout.Space(2);
-                    var cachingEnabled = avatarCachingEnabled;
-                    avatarCachingEnabled = EditorGUILayout.ToggleLeft(new GUIContent("Avatar caching enabled", CACHING_TOOLTIP), avatarCachingEnabled);
-
-                    if (cachingEnabled != avatarCachingEnabled && avatarLoaderSettings != null)
-                    {
-                        avatarLoaderSettings.AvatarCachingEnabled = avatarCachingEnabled;
-                        SaveAvatarLoaderSettings();
+                        saveButtonDirty = true;
                     }
                 });
 
-                GUILayout.Space(4);
+                EditorGUILayout.Space();
 
-                Horizontal(() =>
+                if (GUILayout.Button(SaveButtonText, saveButtonStyle) && ValidateSubdomain())
                 {
-                    GUI.enabled = !isCacheEmpty;
-                    if (GUILayout.Button("Clear local avatar cache", avatarCachingButtonStyle))
-                    {
-                        TryClearCache();
-                        isCacheEmpty = AvatarCache.IsCacheEmpty();
-                    }
-                    GUI.enabled = true;
+                    saveButtonDirty = false;
+                    EditorPrefs.SetString(WEB_VIEW_PARTNER_SAVE_KEY, partnerSubdomain);
 
-                    if (GUILayout.Button(SHOW_CACHING_FOLDER_BUTTON_TEXT, avatarCachingButtonStyle))
-                    {
-                        var path = DirectoryUtility.GetAvatarsDirectoryPath();
-                        if (!Directory.Exists(path))
-                        {
-                            Directory.CreateDirectory(path);
-                        }
-                        EditorUtility.RevealInFinder(path);
-                    }
-                });
-            }, true);
-        }
+                    var type = partner.GetType();
+                    var field = type.GetField("Subdomain");
 
-        private void DrawOtherSection()
-        {
-            Vertical(() =>
-            {
-                GUILayout.Label(OTHER_SECTION_HEADING, HeadingStyle);
+                    var subDomain = field.GetValue(partner).ToString();
 
-                Horizontal(() =>
+                    AnalyticsEditorLogger.EventLogger.LogUpdatePartnerURL(subDomain, partnerSubdomain);
+
+                    field.SetValue(partner, partnerSubdomain);
+                    EditorUtility.SetDirty(partner);
+                    AssetDatabase.SaveAssets();
+                }
+
+                EditorGUILayout.Space();
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Learn more about the partner program", partnerButtonStyle))
                 {
-                    GUILayout.Space(2);
-                    analyticsEnabled = EditorGUILayout.ToggleLeft(new GUIContent("Analytics enabled", ANALYTICS_LOGGING_DESCRIPTION), analyticsEnabled, GUILayout.Width(125));
+                    Application.OpenURL(PARTNER_LEARN_MORE_URL);
+                }
+                EditorGUILayout.EndHorizontal();
 
-                    if (GUILayout.Button(new GUIContent("(Privacy Policy)", ANALYTICS_PRIVACY_TOOLTIP), privacyPolicyStyle))
+                Vertical(() =>
+                {
+                    EditorGUILayout.Space();
+                    GUILayout.Label(ANALYTICS_LOGGING_HEADING, HeadingStyle);
+                    EditorGUILayout.Space();
+                    GUILayout.Label(ANALYTICS_LOGGING_DESCRIPTION, DescriptionStyle);
+                    EditorGUILayout.Space(5);
+                    if (GUILayout.Button(ANALYTICS_PRIVACY_TEXT, DescriptionStyle))
                     {
                         Application.OpenURL(ANALYTICS_PRIVACY_URL);
                     }
+                    EditorGUILayout.Space();
 
+                    EditorGUILayout.BeginHorizontal(GUILayout.Width(100));
+                    analyticsEnabled = EditorGUILayout.ToggleLeft("Yes, enable analytics", analyticsEnabled);
                     if (AnalyticsEditorLogger.IsEnabled != analyticsEnabled)
                     {
                         if (analyticsEnabled)
@@ -294,68 +179,22 @@ namespace ReadyPlayerMe
                             AnalyticsEditorLogger.Disable();
                         }
                     }
-                });
+
+                    EditorGUILayout.EndHorizontal();
+                }, true);
+
             }, true);
-        }
-
-        private void SaveSubdomain()
-        {
-            EditorPrefs.SetString(WEB_VIEW_PARTNER_SAVE_KEY, partnerSubdomain);
-
-            var subDomain = SubdomainHelper.PartnerDomain;
-            if (subDomain != partnerSubdomain)
-            {
-                AnalyticsEditorLogger.EventLogger.LogUpdatePartnerURL(subDomain, partnerSubdomain);
-            }
-            SubdomainHelper.SaveToScriptableObject(partnerSubdomain);
-        }
-
-        private bool IsSubdomainFocusLost()
-        {
-            // focus changed from subdomain to another item
-            if (GUI.GetNameOfFocusedControl() == string.Empty && subdomainFocused)
-            {
-                subdomainFocused = false;
-
-                if (subdomainAfterFocus != partnerSubdomain)
-                {
-                    return true;
-                }
-            }
-            if (GUI.GetNameOfFocusedControl() == SUBDOMAIN_FIELD_CONTROL_NAME && !subdomainFocused)
-            {
-                subdomainFocused = true;
-                subdomainAfterFocus = partnerSubdomain;
-            }
-
-            return false;
         }
 
         private bool ValidateSubdomain()
         {
-            return !partnerSubdomain.All(char.IsWhiteSpace) && !partnerSubdomain.Contains('/') && !EditorUtilities.IsUrlShortcodeValid(partnerSubdomain);
-        }
-
-        private static void TryClearCache()
-        {
-            if (AvatarCache.IsCacheEmpty())
+            if (partnerSubdomain.All(char.IsWhiteSpace))
             {
-                EditorUtility.DisplayDialog("Clear Cache", $"Cache is already empty", "Ok");
-                return;
+                EditorUtility.DisplayDialog("Subdomain Format Error",
+                    $"Partner subdomain cannot contain white space. Value you entered is '{partnerSubdomain}'.", "OK");
+                return false;
             }
-            var size = (AvatarCache.GetCacheSize() / (1024f * 1024)).ToString("F2");
-            var avatarCount = AvatarCache.GetAvatarCount();
-            if (EditorUtility.DisplayDialog("Clear Cache", $"Do you want to clear all the Avatars cache from persistent data path, {size} MB and {avatarCount} avatars?", "Ok", "Cancel"))
-            {
-                AvatarCache.Clear();
-            }
-        }
-
-        private void SaveAvatarLoaderSettings()
-        {
-            EditorUtility.SetDirty(avatarLoaderSettings);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            return true;
         }
     }
 }

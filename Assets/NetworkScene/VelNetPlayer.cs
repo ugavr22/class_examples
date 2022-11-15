@@ -9,14 +9,44 @@ public class VelNetPlayer : NetworkSerializedObjectStream
     public VRPlayer myPlayer;
     public Transform head, leftHand, rightHand;
     public GameObject avatar;
+    string avatarURL = "";
 	protected override void ReceiveState(BinaryReader binaryReader)
 	{
-		//throw new System.NotImplementedException();
-	}
+        string url = binaryReader.ReadString();
+        if(url != avatarURL)
+		{
+            loadAvatar(url);
+		}
+
+        head.position = binaryReader.ReadVector3();
+        head.rotation = binaryReader.ReadQuaternion();
+
+        leftHand.position = binaryReader.ReadVector3();
+        leftHand.rotation = binaryReader.ReadQuaternion();
+
+        rightHand.position = binaryReader.ReadVector3();
+        rightHand.rotation = binaryReader.ReadQuaternion();
+
+        transform.position = binaryReader.ReadVector3();
+        transform.rotation = binaryReader.ReadQuaternion();
+    }
 
 	protected override void SendState(BinaryWriter binaryWriter)
 	{
-		//throw new System.NotImplementedException();
+        if(avatar == null)
+		{
+            return;
+		}
+        binaryWriter.Write(avatarURL);
+        //throw new System.NotImplementedException();
+        binaryWriter.Write(head.position);
+        binaryWriter.Write(head.rotation);
+        binaryWriter.Write(leftHand.position);
+        binaryWriter.Write(leftHand.rotation);
+        binaryWriter.Write(rightHand.position);
+        binaryWriter.Write(rightHand.rotation);
+        binaryWriter.Write(transform.position);
+        binaryWriter.Write(transform.rotation);
 	}
 
 	// Start is called before the first frame update
@@ -26,28 +56,21 @@ public class VelNetPlayer : NetworkSerializedObjectStream
     }
     public void loadAvatar(string url)
 	{
-        MemoryStream mem = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(mem);
-        writer.Write(url);
-        SendRPC("doLoadAvatar", true, mem.ToArray());
-        
-	}
-
-    public void doLoadAvatar(byte[] data)
-	{
-        MemoryStream mem = new MemoryStream(data);
-        BinaryReader reader = new BinaryReader(mem);
-        string url = reader.ReadString();
+        avatarURL = url;
         var avatarLoader = new AvatarLoader();
         avatarLoader.OnCompleted += (_, args) =>
         {
             avatar = args.Avatar;
-            Transform rh = avatar.transform.FindChildRecursive("RightHand");
-            Transform lh = avatar.transform.FindChildRecursive("LeftHand");
+            rightHand = avatar.transform.FindChildRecursive("RightHand");
+            leftHand = avatar.transform.FindChildRecursive("LeftHand");
+            head = avatar.transform.FindChildRecursive("Hips");
+
         };
         avatarLoader.LoadAvatar(url);
-        //Debug.Log(url);
+
     }
+
+   
 
     // Update is called once per frame
     void Update()
@@ -56,14 +79,20 @@ public class VelNetPlayer : NetworkSerializedObjectStream
 		{
             return;
 		}
-        head.position = myPlayer.head.position;
-        head.rotation = myPlayer.head.rotation;
+		if (networkObject.IsMine)
+		{
+            head.position = myPlayer.head.position;
+            head.rotation = myPlayer.head.rotation;
 
-        leftHand.position = myPlayer.hands[0].transform.position;
-        leftHand.rotation = myPlayer.hands[0].transform.rotation;
+            leftHand.position = myPlayer.rpmOffsets[0].position;
+            leftHand.rotation = myPlayer.rpmOffsets[0].rotation;
 
-        rightHand.position = myPlayer.hands[1].transform.position;
-        rightHand.rotation = myPlayer.hands[1].transform.rotation;
-        transform.position = myPlayer.transform.position;
+            rightHand.position = myPlayer.rpmOffsets[1].position;
+            rightHand.rotation = myPlayer.rpmOffsets[1].rotation;
+
+            transform.position = myPlayer.transform.position;
+            transform.rotation = myPlayer.transform.rotation;
+		}
+       
     }
 }

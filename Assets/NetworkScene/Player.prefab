@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5064781026249630934}
   - component: {fileID: 8775117734881048447}
-  - component: {fileID: 630612136848807334}
   - component: {fileID: 6515639414798849482}
   m_Layer: 0
   m_Name: Player
@@ -52,31 +51,7 @@ MonoBehaviour:
   prefabName: 
   isSceneObject: 0
   syncedComponents:
-  - {fileID: 630612136848807334}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
---- !u!114 &630612136848807334
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2163180614072851621}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f1f9b0bbd93a484a987c51f1107ebe5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  networkObject: {fileID: 8775117734881048447}
-  serializationRateHz: 30
-  hybridOnChangeCompression: 1
-  position: 1
-  rotation: 1
-  scale: 0
-  useLocalTransform: 0
-  teleportDistance: 0
-  teleportAngle: 0
+  - {fileID: 6515639414798849482}
 --- !u!114 &6515639414798849482
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,10 +64,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46d4abcdcf7528447bb3dc49c11bb23e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkObject: {fileID: 0}
+  networkObject: {fileID: 8775117734881048447}
   serializationRateHz: 30
   hybridOnChangeCompression: 1
   myPlayer: {fileID: 0}
   head: {fileID: 0}
   leftHand: {fileID: 0}
   rightHand: {fileID: 0}
+  avatar: {fileID: 0}

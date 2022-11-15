@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Siccity.GLTFUtility;
 using UnityEngine;
 
@@ -10,105 +8,59 @@ namespace ReadyPlayerMe
     {
         private const string TAG = nameof(GltfUtilityAvatarImporter);
 
-        public int Timeout { get; set; }
-        public Action<float> ProgressChanged { get; set; }
+        public Action<FailureType, string> OnFailed { get; set; }
+        public Action<float> OnProgressChanged { get; set; }
+        public Action<GameObject> OnCompleted { get; set; }
 
-        public async Task<AvatarContext> Execute(AvatarContext context, CancellationToken token)
-        {
-            if (context.Bytes == null)
-            {
-                throw new NullReferenceException();
-            }
+        private void Completed(GameObject avatar) => OnCompleted?.Invoke(avatar);
 
-            context.Data = await ImportModel(context.Bytes, token);
-            return context;
-        }
+        // ReSharper disable once UnusedParameter.Local
+        private void ProgressChanged(float progress, ImportType type) => OnProgressChanged?.Invoke(progress);
 
-        public async Task<GameObject> ImportModel(byte[] bytes, CancellationToken token = new CancellationToken())
+        public void Import(byte[] bytes)
         {
             SDKLogger.Log(TAG, "Importing avatar from byte array.");
 
             try
             {
-                // ReSharper disable once RedundantAssignment
-                GameObject avatar = null;
 #if UNITY_EDITOR || UNITY_WEBGL
-                avatar = Importer.LoadFromBytes(bytes, new ImportSettings());
-                avatar.SetActive(false);
-                await Task.Yield();
-                ProgressChanged?.Invoke(1);
-                return avatar;
+                var avatar = Importer.LoadFromBytes(bytes, new ImportSettings());
+                OnCompleted?.Invoke(avatar);
+                OnProgressChanged?.Invoke(1);
 #else
-                var isImportDone = false;
-                Importer.ImportGLBAsync(bytes, new ImportSettings(), (model) =>
-                {
-                    avatar = model;
-                    avatar.SetActive(false);
-                    isImportDone = true;
-                }, OnProgressChanged);
-
-                while (!isImportDone && !token.IsCancellationRequested)
-                {
-                    await Task.Yield();
-                }
-
-                token.ThrowCustomExceptionIfCancellationRequested();
-
-                return avatar;
+                    Importer.ImportGLBAsync(bytes, new ImportSettings(), Completed, ProgressChanged);
 #endif
             }
-            catch (Exception exception)
+            catch (Exception e)
             {
-                throw Fail(exception.Message);
+                Fail(FailureType.ModelImportError, $"Failed to import glb model from bytes. {e.Message}");
             }
         }
 
-        public async Task<GameObject> ImportModel(string path, CancellationToken token = new CancellationToken())
+        public void Import(string path)
         {
             SDKLogger.Log(TAG, $"Importing avatar from path {path}");
 
             try
             {
-                // ReSharper disable once RedundantAssignment
-                GameObject avatar = null;
 #if UNITY_EDITOR || UNITY_WEBGL
-                avatar = Importer.LoadFromFile(path, new ImportSettings());
-                avatar.SetActive(false);
-                await Task.Yield();
-                ProgressChanged?.Invoke(1);
-                return avatar;
+                var avatar = Importer.LoadFromFile(path, new ImportSettings());
+                OnProgressChanged?.Invoke(1);
+                OnCompleted?.Invoke(avatar);
 #else
-                var isImportDone = false;
-                Importer.ImportGLBAsync(path, new ImportSettings(), (model) =>
-                {
-                    avatar = model;
-                    avatar.SetActive(false);
-                    isImportDone = true;
-                }, OnProgressChanged);
-
-                while (!isImportDone && !token.IsCancellationRequested)
-                {
-                    await Task.Yield();
-                }
-
-                token.ThrowCustomExceptionIfCancellationRequested();
-
-                return avatar;
+                    Importer.ImportGLBAsync(path, new ImportSettings(), Completed, ProgressChanged);
 #endif
             }
-            catch (Exception exception)
+            catch (Exception e)
             {
-                throw Fail(exception.Message);
+                Fail(FailureType.ModelImportError, $"Failed to import glb model from path. {e.Message}");
             }
         }
 
-        private void OnProgressChanged(float progress, ImportType _) => ProgressChanged?.Invoke(progress);
-
-        private Exception Fail(string error)
+        private void Fail(FailureType failureType, string message)
         {
-            var message = $"Failed to import glb model from bytes. {error}";
             SDKLogger.Log(TAG, message);
-            throw new CustomException(FailureType.ModelImportError, message);
+            OnFailed?.Invoke(failureType, message);
         }
     }
 }

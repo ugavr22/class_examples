@@ -1,59 +1,47 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Text.RegularExpressions;
 using UnityEngine.Networking;
 
 namespace ReadyPlayerMe
 {
-    public class UrlProcessor : IOperation<AvatarContext>
+    public class UrlProcessor
     {
         private const string TAG = nameof(UrlProcessor);
 
-        private const string SHORT_CODE_BASE_URL = "https://api.readyplayer.me/v1/avatars";
+        private const string SHORT_CODE_REGEX = "^[A-Z0-9]{6}$";
+        private const string SHORT_CODE_URL_REGEX = "^(https://readyplayer.me/api/avatar/)[A-Z0-9]{6}$";
+        private const string SHORT_CODE_BASE_URL = "https://readyplayer.me/api/avatar";
         private const string GLB_EXTENSION = ".glb";
         private const string JSON_EXTENSION = ".json";
 
-        public int Timeout { get; set; }
-        public Action<float> ProgressChanged { get; set; }
+        public Action<FailureType, string> OnFailed;
+        public Action<AvatarUri> OnCompleted;
 
-        private bool SaveInProjectFolder { get; set; }
+        public bool SaveInProjectFolder { get; set; }
 
-        public async Task<AvatarContext> Execute(AvatarContext context, CancellationToken token)
+        public void Create(string url)
         {
-            if (string.IsNullOrEmpty(context.Url))
-            {
-                throw Fail(FailureType.UrlProcessError, "Url string is null");
-            }
 
-            SaveInProjectFolder = context.SaveInProjectFolder;
-            try
+            if (Regex.Match(url, SHORT_CODE_REGEX).Length > 0)
             {
-                context.AvatarUri = await Create(context.Url, context.ParametersHash, token);
+                GetUrlFromShortCode(url).Run();
             }
-            catch (Exception e)
+            else if (Regex.Match(url, SHORT_CODE_URL_REGEX).Length > 0)
             {
-                throw Fail(FailureType.UrlProcessError, $"Invalid avatar URL or short code.{e.Message}");
+                GetUrlFromShortCode(url.Substring(url.Length - 6)).Run();
             }
-
-            ProgressChanged?.Invoke(1);
-            return context;
+            else if (url.ToLower().EndsWith(GLB_EXTENSION))
+            {
+                CreateFromUrl(url);
+            }
+            else
+            {
+                Fail(FailureType.UrlProcessError, "Invalid avatar URL or short code.");
+            }
         }
 
-        public async Task<AvatarUri> Create(string url, string paramsHash, CancellationToken token = new CancellationToken())
-        {
-            var fractions = url.Split('?');
-            url = fractions[0];
-            var avatarApiParameters = fractions.Length > 1 ? $"?{fractions[1]}" : "";
-            if (url.ToLower().EndsWith(GLB_EXTENSION))
-            {
-                return CreateFromUrl(url, paramsHash, avatarApiParameters).Result;
-            }
-
-            var urlFromShortCode = await GetUrlFromShortCode(url, token);
-            return CreateFromUrl(urlFromShortCode, paramsHash, avatarApiParameters).Result;
-        }
-
-        private Task<AvatarUri> CreateFromUrl(string url, string paramsHash, string avatarApiParameters)
+        private void CreateFromUrl(string url)
         {
             try
             {
@@ -62,52 +50,44 @@ namespace ReadyPlayerMe
                 var fractions = url.Split('/', '.');
 
                 avatarUri.Guid = fractions[fractions.Length - 2];
-                var fileName = $"{DirectoryUtility.GetAvatarSaveDirectory(avatarUri.Guid, SaveInProjectFolder, paramsHash)}/{avatarUri.Guid}";
-                avatarUri.ModelUrl = $"{url}{avatarApiParameters}";
+                var fileName = $"{DirectoryUtility.GetAvatarSaveDirectory(avatarUri.Guid, SaveInProjectFolder)}/{avatarUri.Guid}";
+                avatarUri.ModelUrl = url;
                 avatarUri.LocalModelPath = $"{fileName}{GLB_EXTENSION}";
-
-                url = url.Remove(url.Length - GLB_EXTENSION.Length, GLB_EXTENSION.Length);
-                avatarUri.MetadataUrl = $"{url}{JSON_EXTENSION}";
-                fileName = $"{DirectoryUtility.GetAvatarSaveDirectory(avatarUri.Guid, SaveInProjectFolder)}/{avatarUri.Guid}";
+                avatarUri.MetadataUrl = url.Replace(GLB_EXTENSION, JSON_EXTENSION);
                 avatarUri.LocalMetadataPath = $"{fileName}{JSON_EXTENSION}";
 
                 SDKLogger.Log(TAG, "Processing completed.");
-                return Task.FromResult(avatarUri);
+                OnCompleted?.Invoke(avatarUri);
             }
             catch (Exception e)
             {
-                throw Fail(FailureType.UrlProcessError, $"Invalid avatar URL. {e.Message}");
+                Fail(FailureType.UrlProcessError, $"Invalid avatar URL. {e.Message}");
             }
         }
 
-        private async Task<string> GetUrlFromShortCode(string shortCode, CancellationToken token)
+        // TODO Find better approach for getting the correct URL and move to WebRequestDispatcher. 
+        private IEnumerator GetUrlFromShortCode(string shortCode)
         {
-            SDKLogger.Log(TAG, "Getting URL from shortcode");
-            var url = shortCode.Contains("/") ? shortCode : $"{SHORT_CODE_BASE_URL}/{shortCode}.glb";
-            using (var request = UnityWebRequest.Get(url))
+            SDKLogger.Log(TAG, "Getting URL from short code");
+            using (var request = UnityWebRequest.Get($"{SHORT_CODE_BASE_URL}/{shortCode}"))
             {
-                var asyncOperation = request.SendWebRequest();
-                while (!asyncOperation.isDone && !token.IsCancellationRequested)
-                {
-                    await Task.Yield();
-                    ProgressChanged?.Invoke(request.downloadProgress);
-                }
-
-                token.ThrowCustomExceptionIfCancellationRequested();
+                yield return request.SendWebRequest();
 
                 if (request.isHttpError || request.isNetworkError)
                 {
-                    throw Fail(FailureType.ShortCodeError, $"Invalid avatar shortcode {request.error}");
+                    Fail(FailureType.ShortCodeError, $"Invalid avatar short code. {request.error}");
                 }
-
-                return request.url;
+                else
+                {
+                    CreateFromUrl(request.url);
+                }
             }
         }
 
-        private Exception Fail(FailureType failureType, string message)
+        private void Fail(FailureType failureType, string message)
         {
             SDKLogger.Log(TAG, message);
-            throw new CustomException(failureType, message);
+            OnFailed?.Invoke(failureType, message);
         }
     }
 }

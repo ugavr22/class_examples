@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 [InitializeOnLoad]
-public class AnalyticsConfirmationEditorWindow : EditorWindowBase
+public class AnalyticsConfirmationEditorWindow : EditorWindow
 {
     private const string HEADING = "Help us improve Ready Player Me SDK";
     private const string DESCRIPTION =
@@ -17,13 +17,17 @@ public class AnalyticsConfirmationEditorWindow : EditorWindowBase
 
     private const string EDITOR_WINDOW_NAME = "allow analytics popup";
 
+    private static readonly Vector2 WindowSize = new Vector2Int(512, 328);
     private static bool neverAskAgain;
 
-    private readonly GUILayoutOption toggleWidth = GUILayout.Width(20);
+    private readonly GUILayoutOption fieldHeight = GUILayout.Height(20);
+    private GUIStyle headingStyle;
     private GUIStyle descriptionStyle;
     private GUIStyle buttonStyle;
 
     private bool variablesLoaded;
+
+    private Banner banner;
 
     static AnalyticsConfirmationEditorWindow()
     {
@@ -39,8 +43,8 @@ public class AnalyticsConfirmationEditorWindow : EditorWindowBase
 
         if (AnalyticsEditorLogger.IsEnabled)
         {
-            AnalyticsEditorLogger.EventLogger.LogOpenProject();
             AnalyticsEditorLogger.EventLogger.IdentifyUser();
+            AnalyticsEditorLogger.EventLogger.LogOpenProject();
             EditorApplication.quitting += OnQuit;
         }
     }
@@ -54,6 +58,7 @@ public class AnalyticsConfirmationEditorWindow : EditorWindowBase
     {
         var window = (AnalyticsConfirmationEditorWindow) GetWindow(typeof(AnalyticsConfirmationEditorWindow));
         window.titleContent = new GUIContent("Analytics Confirmation");
+        window.minSize = window.maxSize = WindowSize;
         window.ShowUtility();
 
         AnalyticsEditorLogger.EventLogger.LogOpenDialog(EDITOR_WINDOW_NAME);
@@ -71,7 +76,7 @@ public class AnalyticsConfirmationEditorWindow : EditorWindowBase
     {
         if (!variablesLoaded) LoadCachedVariables();
         LoadStyles();
-        DrawContent(DrawContent, false);
+        DrawContent();
     }
 
     private void LoadCachedVariables()
@@ -82,14 +87,26 @@ public class AnalyticsConfirmationEditorWindow : EditorWindowBase
 
     private void LoadStyles()
     {
+        if (headingStyle == null)
+        {
+            headingStyle = new GUIStyle()
+            {
+                fontSize = 14,
+                richText = true,
+                fontStyle = FontStyle.Bold,
+                margin = new RectOffset(5, 0, 0, 0)
+            };
+            headingStyle.normal.textColor = Color.white;
+        }
+
         if (descriptionStyle == null)
         {
-            descriptionStyle = new GUIStyle(GUI.skin.label)
+            descriptionStyle = new GUIStyle()
             {
                 fontSize = 12,
                 richText = true,
                 wordWrap = true,
-                fixedWidth = 450
+                margin = new RectOffset(5, 0, 0, 0)
             };
             descriptionStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f, 1.0f);
         }
@@ -97,56 +114,58 @@ public class AnalyticsConfirmationEditorWindow : EditorWindowBase
         if (buttonStyle == null)
         {
             buttonStyle = new GUIStyle(GUI.skin.button);
-            buttonStyle.fontStyle = FontStyle.Bold;
             buttonStyle.fontSize = 12;
-            buttonStyle.padding = new RectOffset(5, 5, 5, 5);
-            buttonStyle.fixedHeight = ButtonHeight;
-            buttonStyle.fixedWidth = 225;
+            buttonStyle.fixedWidth = 251;
+            buttonStyle.padding = new RectOffset(6, 6, 8, 8);
         }
     }
 
     private void DrawContent()
     {
-        Vertical(() =>
+        using (var _ = new CommonEditorLayout())
         {
-            GUILayout.Label(HEADING, HeadingStyle);
+            if (banner == null)
+            {
+                banner = new Banner();
+            }
+
+            banner.DrawBanner(position.size.x, false);
+
+            GUILayout.Space(10);
+            GUILayout.Label(HEADING, headingStyle);
 
             GUILayout.Space(10);
             GUILayout.Label(DESCRIPTION, descriptionStyle);
-
-            GUILayout.Space(10);
+            GUILayout.Space(5);
             if (GUILayout.Button(ANALYTICS_PRIVACY_TEXT, descriptionStyle))
             {
                 Application.OpenURL(ANALYTICS_PRIVACY_URL);
             }
 
-            EditorGUIUtility.AddCursorRect(GUILayoutUtility.GetLastRect(), MouseCursor.Link);
-
             GUILayout.Space(10);
-            Horizontal(() =>
-            {
-                GUILayout.Space(4);
-                neverAskAgain = EditorGUILayout.Toggle(neverAskAgain, toggleWidth);
-                GUILayout.Label("Never Ask Again");
-                GUILayout.FlexibleSpace();
+            EditorGUILayout.BeginHorizontal(GUILayout.Width(100));
 
-                EditorPrefs.SetBool(METRICS_NEVER_ASK_AGAIN, neverAskAgain);
-            });
+            neverAskAgain = EditorGUILayout.Toggle(neverAskAgain, fieldHeight);
+            GUILayout.Label("Never Ask Again");
+            EditorPrefs.SetBool(METRICS_NEVER_ASK_AGAIN, neverAskAgain);
 
-            GUILayout.Space(10);
-            Horizontal(() =>
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Don't Enable Analytics", buttonStyle))
             {
-                if (GUILayout.Button("Don't Enable Analytics", buttonStyle))
-                {
-                    AnalyticsEditorLogger.Disable();
-                    Close();
-                }
-                if (GUILayout.Button("Enable Analytics", buttonStyle))
-                {
-                    AnalyticsEditorLogger.Enable();
-                    Close();
-                }
-            });
-        }, true);
+                AnalyticsEditorLogger.Disable();
+                Close();
+            }
+            if (GUILayout.Button("Enable Analytics", buttonStyle))
+            {
+                AnalyticsEditorLogger.Enable();
+                Close();
+            }
+            EditorGUILayout.EndHorizontal();
+        }
     }
 }

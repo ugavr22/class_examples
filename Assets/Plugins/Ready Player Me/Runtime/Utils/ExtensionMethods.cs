@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
-using System.Threading;
 using UnityEngine;
 
 namespace ReadyPlayerMe
@@ -92,14 +91,5 @@ namespace ReadyPlayerMe
         }
 
         #endregion
-
-        public static void ThrowCustomExceptionIfCancellationRequested(this CancellationToken token)
-        {
-            if (token.IsCancellationRequested)
-            {
-                throw new CustomException(FailureType.OperationCancelled, "Operation was cancelled");
-            }
-        }
-
     }
 }

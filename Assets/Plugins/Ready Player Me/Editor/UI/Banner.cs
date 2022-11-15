@@ -6,35 +6,33 @@ namespace ReadyPlayerMe
     public class Banner
     {
         private const string BANNER_PATH = "Assets/Plugins/Ready Player Me/Editor/RPM_EditorImage_Banner.png";
+        private const string HEADING = "Ready Player Me Unity SDK";
+
+        private const int HEADER_TOP = 110;
+        private const float HEADER_HEIGHT = 10f;
+        private const float HEADER_WIDTH = 320f;
+        private const float HEADER_WIDTH_WITHOUT_VERSION = 250;
 
         private readonly Texture2D banner;
-        private readonly GUIStyle versionTextStyle;
-
-        private const int BANNER_WIDTH = 460;
-        private const int BANNER_HEIGHT = 123;
-
-        private const int FONT_SIZE = 14;
+        private readonly GUIStyle headerTextStyle;
 
         public Banner()
         {
             banner = AssetDatabase.LoadAssetAtPath<Texture2D>(BANNER_PATH);
-            versionTextStyle = new GUIStyle();
-            versionTextStyle.fontSize = FONT_SIZE;
-            versionTextStyle.richText = true;
-            versionTextStyle.fontStyle = FontStyle.Bold;
-            versionTextStyle.normal.textColor = Color.white;
-            versionTextStyle.alignment = TextAnchor.UpperRight;
+            headerTextStyle = new GUIStyle();
+            headerTextStyle.fontSize = 18;
+            headerTextStyle.richText = true;
+            headerTextStyle.fontStyle = FontStyle.Bold;
+            headerTextStyle.normal.textColor = Color.white;
         }
 
-        public void DrawBanner(Rect position)
+        public void DrawBanner(float xOffset, bool showVersion = true)
         {
-            var rect = new Rect((position.size.x - BANNER_WIDTH) / 2, 0, BANNER_WIDTH, BANNER_HEIGHT);
-            GUI.DrawTexture(rect, banner);
-
-            var versionText = new Rect((position.width + BANNER_WIDTH) / 2 - 10, 10, 0, 0);
-            EditorGUI.DropShadowLabel(versionText, ApplicationData.GetData().SDKVersion, versionTextStyle);
-
-            GUILayout.Space(128);
+            GUI.DrawTexture(new Rect((xOffset - banner.width) / 2, 0, banner.width, banner.height), banner);
+            var width = showVersion ? HEADER_WIDTH : HEADER_WIDTH_WITHOUT_VERSION;
+            var headingText = showVersion ? $"{HEADING} {ApplicationData.GetData().SDKVersion}" : HEADING;
+            EditorGUI.DropShadowLabel(new Rect((xOffset - width) / 2, HEADER_TOP, HEADER_HEIGHT, banner.height), headingText, headerTextStyle);
+            GUILayout.Space(142);
         }
     }
 }

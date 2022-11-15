@@ -28,6 +28,7 @@ public class VRPlayer : MonoBehaviour
     public GRIP_STATE[] gripStates = new GRIP_STATE[2] { GRIP_STATE.OPEN, GRIP_STATE.OPEN };
     public Vector3[] gripLocations = new Vector3[2];
     public VRHand[] hands = new VRHand[2];
+    public Transform[] rpmOffsets = new Transform[2];
     Vector3[] cameraRigGripLocation = new Vector3[2];
     public VRGrabbable[] grabbedObjects = new VRGrabbable[2] { null, null };
 

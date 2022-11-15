@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
@@ -14,7 +12,6 @@ namespace ReadyPlayerMe.Analytics
 
         private readonly AppData appData;
         private readonly WebRequestDispatcher dispatcher;
-        private readonly AnalyticsTarget target;
 
         private long sessionId;
 
@@ -22,7 +19,6 @@ namespace ReadyPlayerMe.Analytics
         {
             appData = ApplicationData.GetData();
             dispatcher = new WebRequestDispatcher();
-            target = Resources.Load<AnalyticsTarget>(RESOURCE_PATH);
         }
 
         public void SetSessionId(long id)
@@ -30,29 +26,23 @@ namespace ReadyPlayerMe.Analytics
             sessionId = id;
         }
 
-        public bool IsSessionIdSet()
-        {
-            return sessionId != 0;
-        }
-
         public void SetUserProperties()
         {
-            var userProperties = new Dictionary<string, object>
+            var userProperties = new Dictionary<string, string>
             {
                 { Constants.Properties.ENGINE_VERSION, appData.UnityVersion },
                 { Constants.Properties.RENDER_PIPELINE, appData.RenderPipeline },
                 { Constants.Properties.SUBDOMAIN, appData.PartnerName },
                 { Constants.Properties.APP_NAME, PlayerSettings.productName },
                 { Constants.Properties.SDK_TARGET, "Unity" },
-                { Constants.Properties.APP_IDENTIFIER, Application.identifier },
-                { Constants.Properties.ALLOW_ANALYTICS, true }
+                { Constants.Properties.APP_IDENTIFIER, Application.identifier }
             };
 
             LogEvent(Constants.EventName.SET_USER_PROPERTIES, null, userProperties);
         }
 
 
-        public async void LogEvent(string eventName, Dictionary<string, object> eventProperties = null, Dictionary<string, object> userProperties = null)
+        public void LogEvent(string eventName, Dictionary<string, object> eventProperties = null, Dictionary<string, string> userProperties = null)
         {
             var eventData = new Dictionary<string, object>
             {
@@ -60,8 +50,7 @@ namespace ReadyPlayerMe.Analytics
                 { Constants.AmplitudeKeys.EVENT_TYPE, eventName },
                 { Constants.AmplitudeKeys.PLATFORM, appData.UnityPlatform },
                 { Constants.AmplitudeKeys.SESSION_ID, sessionId },
-                { Constants.AmplitudeKeys.APP_VERSION, appData.SDKVersion },
-                { Constants.AmplitudeKeys.OPERATING_SYSTEM, SystemInfo.operatingSystem }
+                { Constants.AmplitudeKeys.APP_VERSION, appData.SDKVersion }
             };
 
             if (userProperties != null)
@@ -76,7 +65,6 @@ namespace ReadyPlayerMe.Analytics
 
             var payload = new
             {
-                target = GetAnalyticsTarget(),
                 events = new[]
                 {
                     eventData
@@ -86,40 +74,7 @@ namespace ReadyPlayerMe.Analytics
             var json = JsonConvert.SerializeObject(payload);
             var bytes = Encoding.UTF8.GetBytes(json);
 
-            try
-            {
-                await dispatcher.Dispatch(ENDPOINT, bytes, new CancellationToken());
-            }
-            catch (Exception exception)
-            {
-                SDKLogger.Log(nameof(AmplitudeEventLogger), exception);
-            }
+            dispatcher.Dispatch(ENDPOINT, bytes).Run();
         }
-
-        #region Analytics Target
-
-        private const string PRODUCTION = "unity";
-        private const string DEVELOPMENT = "unity-dev";
-        private const string RESOURCE_PATH = "Data/Analytics Target";
-
-        private string GetAnalyticsTarget()
-        {
-            if (target == null)
-            {
-                return PRODUCTION;
-            }
-
-            switch (target.Target)
-            {
-                case Target.Development:
-                    return DEVELOPMENT;
-                case Target.Production:
-                    return PRODUCTION;
-                default:
-                    return string.Empty;
-            }
-        }
-
-        #endregion
     }
 }
