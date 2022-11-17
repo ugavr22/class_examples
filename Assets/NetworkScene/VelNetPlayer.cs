@@ -79,29 +79,18 @@ public class VelNetPlayer : NetworkSerializedObjectStream
 
         if (avatarURL == "default")
         {
-            if (avatar)
-            {
-                Destroy(avatar.gameObject);
-            }
+           
 
-            avatar = GameObject.Instantiate(defaultAvatarPrefab);
-            rightHand = avatar.transform.FindChildRecursive("RightHand");
-            leftHand = avatar.transform.FindChildRecursive("LeftHand");
-            head = avatar.transform.FindChildRecursive("Head");
+            GameObject newAvatar = GameObject.Instantiate(defaultAvatarPrefab);
+            changeAvatar(newAvatar);
         }
         else
         {
             var avatarLoader = new AvatarLoader();
             avatarLoader.OnCompleted += (_, args) =>
             {
-                if (avatar)
-                {
-                    Destroy(avatar.gameObject);
-                }
-                avatar = args.Avatar;
-                rightHand = avatar.transform.FindChildRecursive("RightHand");
-                leftHand = avatar.transform.FindChildRecursive("LeftHand");
-                head = avatar.transform.FindChildRecursive("Head");
+
+                changeAvatar(args.Avatar);
 
             };
             avatarLoader.LoadAvatar(avatarURL);
@@ -109,6 +98,18 @@ public class VelNetPlayer : NetworkSerializedObjectStream
 
     }
 
+    void changeAvatar(GameObject rpmAvatar)
+	{
+
+        if (avatar)
+        {
+            Destroy(avatar.gameObject);
+        }
+        avatar = rpmAvatar;
+        rightHand = rpmAvatar.transform.FindChildRecursive("RightHand");
+        leftHand = rpmAvatar.transform.FindChildRecursive("LeftHand");
+        head = rpmAvatar.transform.FindChildRecursive("Head");
+    }
 	private void OnDestroy()
 	{
 		if (avatar)
