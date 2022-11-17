@@ -73,7 +73,7 @@
     },
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.0.2",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -215,6 +215,15 @@
         "com.unity.inputsystem": "1.3.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "edu.uga.engr.vel.vel-connect": {
+      "version": "1.0.2",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.0"
+      },
+      "url": "http://npm.ugavel.com"
     },
     "edu.uga.engr.vel.velnet": {
       "version": "https://github.com/velaboratory/VelNetUnity.git#upm",

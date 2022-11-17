@@ -18,6 +18,11 @@ public class VelNetPlayer : NetworkSerializedObjectStream
             loadAvatar(url);
 		}
 
+        if(head == null)
+		{
+            return;
+		}
+
         head.position = binaryReader.ReadVector3();
         head.rotation = binaryReader.ReadQuaternion();
 
