@@ -1,4 +1,5 @@
 using ReadyPlayerMe;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -9,22 +10,30 @@ public class VelNetPlayer : NetworkSerializedObjectStream
     public VRPlayer myPlayer;
     public Transform head, leftHand, rightHand;
     public GameObject avatar;
-    string avatarURL = "";
+    string avatarURL = "default";
+    public GameObject defaultAvatarPrefab;
 	protected override void ReceiveState(BinaryReader binaryReader)
 	{
-        string url = binaryReader.ReadString();
-        if(url != avatarURL)
-		{
-            loadAvatar(url);
-		}
-
-        if(head == null)
-		{
+        try
+        {
+            string url = binaryReader.ReadString();
+            if (url != avatarURL)
+            {
+                loadAvatar(url);
+            }
+        }
+        catch (Exception e) {
             return;
-		}
+        }
 
-        head.position = binaryReader.ReadVector3();
-        head.rotation = binaryReader.ReadQuaternion();
+        if (head == null)
+        {
+            return;
+        }
+        
+
+
+        updateAvatarHead(binaryReader.ReadVector3(), binaryReader.ReadQuaternion());
 
         leftHand.position = binaryReader.ReadVector3();
         leftHand.rotation = binaryReader.ReadQuaternion();
@@ -43,7 +52,6 @@ public class VelNetPlayer : NetworkSerializedObjectStream
             return;
 		}
         binaryWriter.Write(avatarURL);
-        //throw new System.NotImplementedException();
         binaryWriter.Write(head.position);
         binaryWriter.Write(head.rotation);
         binaryWriter.Write(leftHand.position);
@@ -61,24 +69,56 @@ public class VelNetPlayer : NetworkSerializedObjectStream
     }
     public void loadAvatar(string url)
 	{
-        avatarURL = url;
-        var avatarLoader = new AvatarLoader();
-        avatarLoader.OnCompleted += (_, args) =>
+
+        if (url != null)
         {
-            avatar = args.Avatar;
+            avatarURL = url;
+        }
+
+       
+
+        if (avatarURL == "default")
+        {
+            if (avatar)
+            {
+                Destroy(avatar.gameObject);
+            }
+
+            avatar = GameObject.Instantiate(defaultAvatarPrefab);
             rightHand = avatar.transform.FindChildRecursive("RightHand");
             leftHand = avatar.transform.FindChildRecursive("LeftHand");
-            head = avatar.transform.FindChildRecursive("Hips");
+            head = avatar.transform.FindChildRecursive("Head");
+        }
+        else
+        {
+            var avatarLoader = new AvatarLoader();
+            avatarLoader.OnCompleted += (_, args) =>
+            {
+                if (avatar)
+                {
+                    Destroy(avatar.gameObject);
+                }
+                avatar = args.Avatar;
+                rightHand = avatar.transform.FindChildRecursive("RightHand");
+                leftHand = avatar.transform.FindChildRecursive("LeftHand");
+                head = avatar.transform.FindChildRecursive("Head");
 
-        };
-        avatarLoader.LoadAvatar(url);
+            };
+            avatarLoader.LoadAvatar(avatarURL);
+        }
 
     }
 
-   
+	private void OnDestroy()
+	{
+		if (avatar)
+		{
+            Destroy(avatar.gameObject);
+		}
+	}
 
-    // Update is called once per frame
-    void Update()
+	// Update is called once per frame
+	void Update()
     {
         if(myPlayer == null || avatar == null)
 		{
@@ -86,8 +126,11 @@ public class VelNetPlayer : NetworkSerializedObjectStream
 		}
 		if (networkObject.IsMine)
 		{
-            head.position = myPlayer.head.position;
-            head.rotation = myPlayer.head.rotation;
+
+
+            //head.position = myPlayer.head.position;
+            //head.rotation = myPlayer.head.rotation;
+            updateAvatarHead(myPlayer.head.position, myPlayer.head.rotation);
 
             leftHand.position = myPlayer.rpmOffsets[0].position;
             leftHand.rotation = myPlayer.rpmOffsets[0].rotation;
@@ -99,5 +142,19 @@ public class VelNetPlayer : NetworkSerializedObjectStream
             transform.rotation = myPlayer.transform.rotation;
 		}
        
+    }
+
+    public void updateAvatarHead(Vector3 targetPosition, Quaternion targetRotation)
+	{
+        //we need the head to go to this position by moving the avatar
+        Vector3 headOffset = head.position - avatar.transform.position;
+        avatar.transform.position = targetPosition - headOffset;
+
+        Vector3 f = targetRotation * Vector3.forward;
+        float headTilt = Mathf.Asin(f.y) * Mathf.Rad2Deg;
+        head.localRotation = Quaternion.Euler(-headTilt, 0, 0);
+        f.y = 0;
+        f.Normalize();
+        avatar.transform.forward = f; //makes the body face the direction of the head
     }
 }

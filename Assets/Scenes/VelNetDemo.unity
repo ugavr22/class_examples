@@ -336,6 +336,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   myPlayer: {fileID: 1190866668578829956}
   codeText: {fileID: 546603715}
+  localPlayer: {fileID: 0}
 --- !u!4 &997003993
 Transform:
   m_ObjectHideFlags: 0

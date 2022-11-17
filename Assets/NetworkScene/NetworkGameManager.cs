@@ -10,7 +10,7 @@ public class NetworkGameManager : MonoBehaviour
     // Start is called before the first frame update
     [SerializeField] VRPlayer myPlayer;
     [SerializeField] TMP_Text codeText;
-
+    [SerializeField] VelNetPlayer localPlayer;
     void Start()
     {
         VelNetManager.OnLoggedIn += () => {
@@ -18,16 +18,24 @@ public class NetworkGameManager : MonoBehaviour
         };
         VelNetManager.OnJoinedRoom += (roomname) => {
             NetworkObject player = VelNetManager.NetworkInstantiate("Player");
-            player.GetComponent<VelNetPlayer>().loadAvatar("https://api.readyplayer.me/v1/avatars/6373d2e55764c3e56af74cd6.glb");
-            player.GetComponent<VelNetPlayer>().myPlayer = myPlayer;
+            localPlayer = player.GetComponent<VelNetPlayer>();
+            string avatar_url = VELConnectManager.GetDeviceData("avatar_url");
+            localPlayer.loadAvatar(avatar_url);
+            //localPlayer.loadAvatar(null);
+            localPlayer.myPlayer = myPlayer;
         };
 
         codeText.text = ""+VELConnectManager.PairingCode;
-
-        VELConnectManager.OnInitialState += (state) => { 
-            
-        };
+        VELConnectManager.OnDeviceDataChanged += onDeviceDataChanged;
     }
+
+    void onDeviceDataChanged(string key, string value)
+	{
+        if(key == "avatar_url" && localPlayer != null)
+		{
+            localPlayer.loadAvatar(value);
+		}
+	}
 
     // Update is called once per frame
     void Update()

@@ -72,3 +72,4 @@ MonoBehaviour:
   leftHand: {fileID: 0}
   rightHand: {fileID: 0}
   avatar: {fileID: 0}
+  defaultAvatarPrefab: {fileID: 1026698979166300345, guid: 9ce75707597ffbc41a5db399f8374ba3, type: 3}
