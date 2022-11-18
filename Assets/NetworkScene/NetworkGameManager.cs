@@ -11,6 +11,9 @@ public class NetworkGameManager : MonoBehaviour
     [SerializeField] VRPlayer myPlayer;
     [SerializeField] TMP_Text codeText;
     [SerializeField] VelNetPlayer localPlayer;
+    [SerializeField] WebRTCManager rtc;
+    [SerializeField] VelVoice velVoice;
+    [SerializeField] TMP_Text debugText;
     void Start()
     {
         VelNetManager.OnLoggedIn += () => {
@@ -27,13 +30,22 @@ public class NetworkGameManager : MonoBehaviour
 
         codeText.text = ""+VELConnectManager.PairingCode;
         VELConnectManager.OnDeviceDataChanged += onDeviceDataChanged;
+        int minFreq;
+        int maxFreq;
+        velVoice.startMicrophone(Microphone.devices[0]); //change this if not default microphone
     }
 
     void onDeviceDataChanged(string key, string value)
 	{
+        Debug.Log(key + "," + value);
         if(key == "avatar_url" && localPlayer != null)
 		{
             localPlayer.loadAvatar(value);
+		}
+        if(key == "streamer_stream_id")
+		{
+            rtc.streamRoom = value;
+            rtc.Reload();
 		}
 	}
 

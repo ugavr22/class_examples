@@ -12,6 +12,7 @@ public class VelNetPlayer : NetworkSerializedObjectStream
     public GameObject avatar;
     string avatarURL = "default";
     public GameObject defaultAvatarPrefab;
+    public Transform audioSourceMoveable;
 	protected override void ReceiveState(BinaryReader binaryReader)
 	{
         try
@@ -109,6 +110,9 @@ public class VelNetPlayer : NetworkSerializedObjectStream
         rightHand = rpmAvatar.transform.FindChildRecursive("RightHand");
         leftHand = rpmAvatar.transform.FindChildRecursive("LeftHand");
         head = rpmAvatar.transform.FindChildRecursive("Head");
+        
+
+      
     }
 	private void OnDestroy()
 	{
@@ -125,6 +129,9 @@ public class VelNetPlayer : NetworkSerializedObjectStream
 		{
             return;
 		}
+
+        
+
 		if (networkObject.IsMine)
 		{
 
@@ -147,6 +154,8 @@ public class VelNetPlayer : NetworkSerializedObjectStream
 
     public void updateAvatarHead(Vector3 targetPosition, Quaternion targetRotation)
 	{
+
+        audioSourceMoveable.position = head.position;
         //we need the head to go to this position by moving the avatar
         Vector3 headOffset = head.position - avatar.transform.position;
         avatar.transform.position = targetPosition - headOffset;
