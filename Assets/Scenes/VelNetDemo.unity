@@ -476,7 +476,7 @@ MonoBehaviour:
   myPlayer: {fileID: 1190866668578829956}
   codeText: {fileID: 546603715}
   localPlayer: {fileID: 0}
-  rtc: {fileID: 2133545757}
+  rtc: {fileID: 2133545760}
   velVoice: {fileID: 2070326948}
   debugText: {fileID: 0}
   ovrRig: {fileID: 1190866668578926638}
@@ -1309,7 +1309,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1765652216}
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!4 &1765652220
 Transform:
   m_ObjectHideFlags: 0
@@ -1453,17 +1453,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 731290447768012116, guid: 89b1b45deecf4e745805f5a75175139b, type: 3}
   m_PrefabInstance: {fileID: 1802862477}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2133545757 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 731290447768012112, guid: 89b1b45deecf4e745805f5a75175139b, type: 3}
-  m_PrefabInstance: {fileID: 1802862477}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2133545756}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3d9021ddf0ffae4ab22885aa83ae435, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!82 &2133545759
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1560,6 +1549,40 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &2133545760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2133545756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14f20603184d5c64c88db774754d3b5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  networkObject: {fileID: 2133545761}
+  serializationRateHz: 30
+  hybridOnChangeCompression: 1
+--- !u!114 &2133545761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2133545756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5515094c5c544b6b8ed7fd51a86548d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ownershipLocked: 0
+  networkId: 
+  sceneNetworkId: 1
+  prefabName: 
+  isSceneObject: 1
+  syncedComponents:
+  - {fileID: 2133545760}
 --- !u!1 &1189448650689366514
 GameObject:
   m_ObjectHideFlags: 0

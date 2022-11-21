@@ -16,7 +16,7 @@ public class NetworkGameManager : MonoBehaviour
     [SerializeField] VRPlayer myPlayer;
     [SerializeField] TMP_Text codeText;
     [SerializeField] VelNetPlayer localPlayer;
-    [SerializeField] WebRTCManager rtc;
+    [SerializeField] SyncWebRTCUrl rtc;
     [SerializeField] VelVoice velVoice;
     [SerializeField] TMP_Text debugText;
     [SerializeField] GameObject ovrRig;
@@ -69,8 +69,7 @@ public class NetworkGameManager : MonoBehaviour
 		}
         if(key == "streamer_stream_id")
 		{
-            rtc.streamRoom = value;
-            rtc.Reload();
+            rtc.setRoom(value);
 		}
 	}
 
