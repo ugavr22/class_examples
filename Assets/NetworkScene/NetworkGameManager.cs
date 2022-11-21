@@ -4,6 +4,11 @@ using UnityEngine;
 using VelNet;
 using TMPro;
 using VELConnect;
+using UnityEngine.XR.Management;
+using UnityEngine.XR.ARCore;
+using Unity.XR.Oculus;
+using UnityEngine.XR.OpenXR;
+
 public class NetworkGameManager : MonoBehaviour
 {
     //[SerializeField] NetworkObject testNO;
@@ -14,8 +19,29 @@ public class NetworkGameManager : MonoBehaviour
     [SerializeField] WebRTCManager rtc;
     [SerializeField] VelVoice velVoice;
     [SerializeField] TMP_Text debugText;
+    [SerializeField] GameObject ovrRig;
+    [SerializeField] GameObject arRig;
+
+
+
+
     void Start()
     {
+        for (int i = 0; i < XRGeneralSettings.Instance.Manager.activeLoaders.Count; i++)
+		{
+            XRLoader loader = XRGeneralSettings.Instance.Manager.activeLoaders[i];
+            if (loader.GetType() == typeof(ARCoreLoader)){
+                arRig.SetActive(true);
+            }
+            if (loader.GetType() == typeof(OculusLoader) || loader.GetType()==typeof(OpenXRLoader))
+            {
+                ovrRig.SetActive(true);
+            }
+
+        }
+        
+
+
         VelNetManager.OnLoggedIn += () => {
             VelNetManager.Join("myroom3");
         };
@@ -30,8 +56,7 @@ public class NetworkGameManager : MonoBehaviour
 
         codeText.text = ""+VELConnectManager.PairingCode;
         VELConnectManager.OnDeviceDataChanged += onDeviceDataChanged;
-        int minFreq;
-        int maxFreq;
+
         velVoice.startMicrophone(Microphone.devices[0]); //change this if not default microphone
     }
 
