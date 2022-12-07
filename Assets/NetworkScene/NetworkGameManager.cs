@@ -23,7 +23,35 @@ public class NetworkGameManager : MonoBehaviour
     [SerializeField] GameObject arRig;
 
 
+    IEnumerator startNetworking()
+	{
+        bool hasInitialState = false;
+        bool isJoined = false;
+        VELConnectManager.OnInitialState += (s) =>
+        {
+            hasInitialState = true;
+        };
 
+        VelNetManager.OnLoggedIn += () => {
+
+
+            VelNetManager.Join("myroom3");
+        };
+        VelNetManager.OnJoinedRoom += (roomname) => {
+            NetworkObject player = VelNetManager.NetworkInstantiate("Player");
+            localPlayer = player.GetComponent<VelNetPlayer>();
+            //localPlayer.loadAvatar(null);
+            localPlayer.myPlayer = myPlayer;
+            isJoined = true;
+        };
+
+        codeText.text = "" + VELConnectManager.PairingCode;
+        VELConnectManager.OnDeviceDataChanged += onDeviceDataChanged;
+
+        yield return new WaitUntil(() => { return hasInitialState && isJoined; });
+        string avatar_url = VELConnectManager.GetDeviceData("avatar_url");
+        localPlayer.loadAvatar(avatar_url);
+    }
 
     void Start()
     {
@@ -39,25 +67,10 @@ public class NetworkGameManager : MonoBehaviour
             }
 
         }
-        
-
-
-        VelNetManager.OnLoggedIn += () => {
-            VelNetManager.Join("myroom3");
-        };
-        VelNetManager.OnJoinedRoom += (roomname) => {
-            NetworkObject player = VelNetManager.NetworkInstantiate("Player");
-            localPlayer = player.GetComponent<VelNetPlayer>();
-            string avatar_url = VELConnectManager.GetDeviceData("avatar_url");
-            localPlayer.loadAvatar(avatar_url);
-            //localPlayer.loadAvatar(null);
-            localPlayer.myPlayer = myPlayer;
-        };
-
-        codeText.text = ""+VELConnectManager.PairingCode;
-        VELConnectManager.OnDeviceDataChanged += onDeviceDataChanged;
 
         velVoice.startMicrophone(Microphone.devices[0]); //change this if not default microphone
+
+        StartCoroutine(startNetworking());
     }
 
     void onDeviceDataChanged(string key, string value)
